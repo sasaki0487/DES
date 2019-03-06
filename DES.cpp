@@ -266,23 +266,25 @@ void encrypt(uint64_t in , uint64_t k,int num){
     in = IIP(in);
     end = clock(); 
     cpu_time_used[num] = ((double) (end - start)) / CLOCKS_PER_SEC;
-    printf("%llx %llx\n" , in , k);
-    //fprintf(fout,"%llx %llx\n" , in , key);
+    printf("%016llx %016llx\n" , in , k);
+    fprintf(fout,"%016llx %016llx\n" , in , k);
+    fclose(fout);
 }
 
 int main(){
     uint64_t input,key;
+    FILE* fen,fde;
     /*encrypt*/ 
+    fen = fopen("DES-Key-Plaintext.txt","r");
     for(int i = 0 ; i < 10 ; i++){
-        scanf("%llx%llx" , &key , &input);
+        fscanf(fen,"%llx %llx", &key , &input);
         printf("%llx %llx\n" , key , input);
         encrypt(input,key,i);
     }
-    
+    fclose(fen);
     /*decrypt*/
     for(int i = 0 ; i < 10 ; i++){
     }
-    fout = fopen("out.txt" , "a+");
-    fclose(fout);
+    //fclose(fout);
     return 0;
 }
