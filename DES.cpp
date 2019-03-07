@@ -139,6 +139,7 @@ int Rotate[16] = {
 FILE *fout;
 clock_t start, end; 
 double cpu_time_used[20]; 
+uint64_t subkeys[16];
 
 uint64_t ini_permutation(uint64_t in){
     uint64_t out = 0,msk=first;
@@ -243,29 +244,44 @@ uint64_t pbox(uint64_t &in){
     return out;
 }
 
-void encrypt(uint64_t in , uint64_t k,int num){
+void keygen(uint64_t k){
+    k = pc1(k);
+    for(int i = 0 ; i < 16 ; i++){
+        subkeys[i] = pc2(k,i);
+    }
+}
+
+void crypt(uint64_t in , uint64_t k,int num,int en_de_crypt){
     uint64_t key,pckey,left,right,tmp;
     fout = fopen("out.txt","a+"); 
     start = clock();
     in = ini_permutation(in);
-    key = pc1(k);
+    keygen(k);
     for(int i = 0 ; i < 16 ; i++){
         left = in >> 32 & 0xFFFFFFFF;
         right = in & 0xFFFFFFFF;
         tmp = right;
         right = expand(right);
-        pckey = pc2(key,i);
-        right = right ^ pckey;
+        if(en_de_crypt == 1)
+            right = right ^ subkeys[i];
+        else
+            right = right ^ subkeys[15-i];
         right = sbox(right);
         right = pbox(right);
         in = (tmp << 32) + (left ^ right);
-    }
+    }/*
+    int l = 0;
+    for(int i = 0 ; i < 10000 ; i++){
+        for(int j = 0 ; j < 10000 ; j++){
+            l *= 1;
+        }
+    }*/
     left = in >> 32 & 0xFFFFFFFF;
     right = (in & 0xFFFFFFFF) << 32;
     in = left + right;
     in = IIP(in);
     end = clock(); 
-    cpu_time_used[num] = ((double) (end - start)) / CLOCKS_PER_SEC;
+    cpu_time_used[num] = ((double) (end - start)) / (double) CLOCKS_PER_SEC;
     printf("%016llx %016llx\n" , in , k);
     fprintf(fout,"%016llx %016llx\n" , in , k);
     fclose(fout);
@@ -273,18 +289,30 @@ void encrypt(uint64_t in , uint64_t k,int num){
 
 int main(){
     uint64_t input,key;
-    FILE* fen,fde;
+    FILE *fen,*fde;
+    fout = fopen("out.txt","w");
+    fclose(fout);
     /*encrypt*/ 
+    printf("=== Encrypt Start ===\n");
     fen = fopen("DES-Key-Plaintext.txt","r");
     for(int i = 0 ; i < 10 ; i++){
         fscanf(fen,"%llx %llx", &key , &input);
-        printf("%llx %llx\n" , key , input);
-        encrypt(input,key,i);
+        crypt(input,key,i,1);
     }
     fclose(fen);
     /*decrypt*/
+    printf("=== Decrypt Start ===\n");
+    fde = fopen("DES-Key-Ciphertext.txt","r");
     for(int i = 0 ; i < 10 ; i++){
+        fscanf(fen,"%llx %llx", &key , &input);
+        crypt(input,key,i+10,2);
     }
-    //fclose(fout);
+    fclose(fde);
+    fout = fopen("out.txt","a+");
+    for(int i = 0 ; i < 20 ; i++){
+        fprintf(fout,"%.0lf ",cpu_time_used[i]*1000);
+    }
+    fclose(fout);
+    printf("===    Finish     ===\n");
     return 0;
 }
