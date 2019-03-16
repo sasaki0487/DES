@@ -292,17 +292,25 @@ int main(){
     FILE *fen,*fde;
     fout = fopen("out.txt","w");
     fclose(fout);
-    /*encrypt*/ 
-    printf("=== Encrypt Start ===\n");
+    /*encrypt*/
     fen = fopen("DES-Key-Plaintext.txt","r");
+    if(!fen){
+        printf("File \"DES-Key-Plaintext.txt\" not found");
+        return 0;
+    }
+    printf("=== Encrypt Start ===\n");
     for(int i = 0 ; i < 10 ; i++){
         fscanf(fen,"%llx %llx", &key , &input);
         crypt(input,key,i,1);
     }
     fclose(fen);
     /*decrypt*/
-    printf("=== Decrypt Start ===\n");
     fde = fopen("DES-Key-Ciphertext.txt","r");
+    if(!fde){
+        printf("File \"DES-Key-Ciphertext.txt\" not found");
+        return 0;
+    }
+    printf("=== Decrypt Start ===\n");
     for(int i = 0 ; i < 10 ; i++){
         fscanf(fen,"%llx %llx", &key , &input);
         crypt(input,key,i+10,2);
